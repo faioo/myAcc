@@ -6,6 +6,8 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.icu.util.Calendar;
+import android.icu.util.TimeZone;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
@@ -36,7 +38,7 @@ public class MainActivity extends Activity  {
     TextView contentRead;
 
     int count=0;
-    final String mfileName = "/texts.txt" ;
+    String mfileName = "texts.txt" ;
     public String path = "/storage/emulated/0/Download";
 
 
@@ -84,7 +86,7 @@ public class MainActivity extends Activity  {
         }
     }
 
-    private void write(String content)
+    private void write123(String content)
     {
         try {
             FileOutputStream fos = openFileOutput("datainfo.txt",MODE_PRIVATE);
@@ -126,11 +128,13 @@ public class MainActivity extends Activity  {
                 sm = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
                 int sensorType = Sensor.TYPE_ACCELEROMETER;
                 int sensorType2 = Sensor.TYPE_LINEAR_ACCELERATION;
+                int sensorType3 = Sensor.TYPE_GYROSCOPE;
                 //20Hz=50000,50Hz=20000 100Hz=10000
-                sm.registerListener(myAccelerometerListener, sm.getDefaultSensor(sensorType2), 10000);
+                //sm.registerListener(myAccelerometerListener, sm.getDefaultSensor(sensorType2), 10000);
+                //创建新文件名
+                fileNameBasedOnTime();
+                sm.registerListener(myAccelerometerListener, sm.getDefaultSensor(sensorType3), 10000);
                 count =0;
-
-
             }
         });
 
@@ -140,8 +144,8 @@ public class MainActivity extends Activity  {
             public void onClick(View view) {
                 sm.unregisterListener(myAccelerometerListener);
                 contentWrite.setText("");
-                contentRead.setText("已保存文件！");
-                Toast.makeText(MainActivity.this,"已保存文件！.",Toast.LENGTH_SHORT).show();
+                contentRead.setText("手动停止,已保存文件！");
+                Toast.makeText(MainActivity.this,"stop！.",Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -150,7 +154,8 @@ public class MainActivity extends Activity  {
 
         //复写onSensorChanged方法
         public void onSensorChanged(SensorEvent sensorEvent){
-            if(sensorEvent.sensor.getType() == Sensor.TYPE_LINEAR_ACCELERATION){
+            if(sensorEvent.sensor.getType() == Sensor.TYPE_GYROSCOPE){
+            //if(sensorEvent.sensor.getType() == Sensor.TYPE_LINEAR_ACCELERATION){
                 Log.i(TAG,"onSensorChanged");
 
                 float X_lateral = sensorEvent.values[0];
@@ -164,7 +169,8 @@ public class MainActivity extends Activity  {
                 y.setText("Y: "+Y_longitudinal);
                 z.setText("Z: "+(Z_vertical));
 
-                String path = Environment.getExternalStorageDirectory().getAbsolutePath()+ File.separator+"Download"+File.separator+"123.txt";
+                //String path = Environment.getExternalStorageDirectory().getAbsolutePath()+ File.separator+"Download"+File.separator+"123.txt";
+                String path = Environment.getExternalStorageDirectory().getAbsolutePath()+ File.separator+"Download"+File.separator+mfileName;
                 File file = new File(path);
 
                 float f[]={X_lateral,Y_longitudinal,Z_vertical};
@@ -174,7 +180,6 @@ public class MainActivity extends Activity  {
                     contentWrite.setText("");
                     contentWrite.setText("文件写入中...");
                     FileOutputStream out = new FileOutputStream(file,true);
-
                     //out.write(("\n heading "+X_lateral).getBytes());
                     //out.write(("\n pitch "+Y_longitudinal).getBytes());
                     //out.write(("\n roll "+Z_vertical).getBytes());
@@ -189,16 +194,15 @@ public class MainActivity extends Activity  {
 
                 Log.e("","path : "+path);
 
-                write(z.getText().toString());
+                //write123(z.getText().toString());
                 count++;
-                if (count == 12800)
+                if (count == 12800*2)
                 {
                     sm.unregisterListener(myAccelerometerListener);
                     contentWrite.setText("");
                     contentRead.setText("时间到，已保存文件！");
                     Toast.makeText(MainActivity.this,"时间到，已保存文件！.",Toast.LENGTH_SHORT).show();
                 }
-
             }
         }
         //复写onAccuracyChanged方法
@@ -215,7 +219,30 @@ public class MainActivity extends Activity  {
         super.onPause();
     }
 
-
-
-
+    public void fileNameBasedOnTime()
+    {
+        //当前时间
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeZone(TimeZone.getTimeZone("GMT+8:00"));
+        String year;
+        String month;
+        String day;
+        String hour;
+        String minute;
+        String second;
+        String my_time_1;
+        String my_time_2;
+        year = String.valueOf(cal.get(Calendar.YEAR));
+        month = String.valueOf(cal.get(Calendar.MONTH)+1);
+        day = String.valueOf(cal.get(Calendar.DAY_OF_MONTH));
+        if (cal.get(Calendar.AM_PM) == 0)
+            hour = String.valueOf(cal.get(Calendar.HOUR));
+        else
+            hour = String.valueOf(cal.get(Calendar.HOUR)+12);
+        minute = String.valueOf(cal.get(Calendar.MINUTE));
+        second = String.valueOf(cal.get(Calendar.SECOND));
+        my_time_1 = year + "_" + month + "_" + day;
+        my_time_2 = hour + ":" + minute + ":" + second;
+        mfileName = "123 "+my_time_1+" "+my_time_2+".txt";
+    }
 }
