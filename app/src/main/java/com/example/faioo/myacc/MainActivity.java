@@ -1,7 +1,9 @@
 package com.example.faioo.myacc;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -10,6 +12,8 @@ import android.icu.util.Calendar;
 import android.icu.util.TimeZone;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -21,11 +25,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
-
+import java.util.List;
 
 
 public class MainActivity extends Activity  {
-
 
 
     TextView x = null;
@@ -59,6 +62,8 @@ public class MainActivity extends Activity  {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        //初始化权限
+        mPermission();
         /**
          * 控件初始化
          */
@@ -69,6 +74,29 @@ public class MainActivity extends Activity  {
     private String lastShowMsg = null;
     private String curShowMsg = null;
 
+    String[] permissions = new String[]{
+            Manifest.permission.MOUNT_UNMOUNT_FILESYSTEMS,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.READ_EXTERNAL_STORAGE
+    };
+
+    List<String> mPermissionList = new ArrayList<>();
+
+    private void mPermission()
+    {
+        mPermissionList.clear();
+        for (int i = 0; i < permissions.length; i++) {
+            if (ContextCompat.checkSelfPermission(MainActivity.this, permissions[i]) != PackageManager.PERMISSION_GRANTED) {
+                mPermissionList.add(permissions[i]);
+            }
+        }
+        if (mPermissionList.isEmpty()) {//未授予的权限为空，表示都授予了
+            Toast.makeText(MainActivity.this,"已经授权",Toast.LENGTH_LONG).show();
+        } else {//请求权限方法
+            String[] permissions = mPermissionList.toArray(new String[mPermissionList.size()]);//将List转为数组
+            ActivityCompat.requestPermissions(MainActivity.this, permissions, 1);
+        }
+    }
 
     private void customShowToast(Context context, CharSequence s) {
         curShowMsg = s.toString();
@@ -246,3 +274,5 @@ public class MainActivity extends Activity  {
         mfileName = "123 "+my_time_1+" "+my_time_2+".txt";
     }
 }
+
+
