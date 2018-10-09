@@ -20,10 +20,8 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -114,29 +112,6 @@ public class MainActivity extends Activity  {
         }
     }
 
-    private void write123(String content)
-    {
-        try {
-            FileOutputStream fos = openFileOutput("datainfo.txt",MODE_PRIVATE);
-            BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(fos));
-            bw.write(content);
-
-            //customShowToast(MainActivity.this, "文件写入中...");
-
-
-            //Toast.makeText(MainActivity.this,"文件写入中...",Toast.LENGTH_SHORT).show();
-            bw.close();
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-    }
-
-    private void read()
-    {
-    }
-
     public void initView() {
         x = (TextView) findViewById(R.id.editTextx);
         y = (TextView) findViewById(R.id.editTexty);
@@ -208,21 +183,12 @@ public class MainActivity extends Activity  {
                     contentWrite.setText("");
                     contentWrite.setText("文件写入中...");
                     FileOutputStream out = new FileOutputStream(file,true);
-                    //out.write(("\n heading "+X_lateral).getBytes());
-                    //out.write(("\n pitch "+Y_longitudinal).getBytes());
-                    //out.write(("\n roll "+Z_vertical).getBytes());
                     out.write((f[0]+"\t"+f[1]+"\t"+f[2]+"\n").getBytes());
-                    //out.write((X_lateral+",").getBytes());
-                    //out.write((Y_longitudinal+",").getBytes());
-                    //out.write((Z_vertical+"\n").getBytes());
                     out.close();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-
                 Log.e("","path : "+path);
-
-                //write123(z.getText().toString());
                 count++;
                 if (count == 12800*2)
                 {
