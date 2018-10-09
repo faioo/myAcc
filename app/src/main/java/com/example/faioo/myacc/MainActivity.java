@@ -19,7 +19,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.icu.util.Calendar;
 import android.icu.util.TimeZone;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
@@ -28,18 +27,19 @@ import java.util.List;
 
 public class MainActivity extends Activity  {
 
-
     TextView x = null;
     TextView y = null;
     TextView z = null;
     TextView fileName;
-    TextView contentWrite;
     Button btnStart;
     Button btnStop;
     TextView contentRead;
+    TextView contentWrite;
 
     int count=0;
+    //写入的文件名
     String mfileName = "texts.txt" ;
+    //文件存储路径
     public String path = "/storage/emulated/0/Download";
 
     //设置LOG标签
@@ -67,6 +67,7 @@ public class MainActivity extends Activity  {
     //未授权但需要申请权限的列表
     List<String> mPermissionList = new ArrayList<>();
 
+    //动态申请权限
     private void mPermission()
     {
         mPermissionList.clear();
@@ -97,8 +98,6 @@ public class MainActivity extends Activity  {
             //String[] strings= {"http://img.doooor.com/img/forum/201412/05/220220e93j9j809wcwz9hb.jpg"};
             @Override
             public void onClick(View view) {
-
-
                 sm = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
                 int sensorType = Sensor.TYPE_ACCELEROMETER;
                 int sensorType2 = Sensor.TYPE_LINEAR_ACCELERATION;
@@ -184,6 +183,7 @@ public class MainActivity extends Activity  {
         super.onPause();
     }
 
+    //创建以当前时间为标识的文件名
     public void fileNameBasedOnTime()
     {
         //当前时间
