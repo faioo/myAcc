@@ -8,6 +8,8 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.icu.util.Calendar;
+import android.icu.util.TimeZone;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
@@ -17,8 +19,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.icu.util.Calendar;
-import android.icu.util.TimeZone;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -39,7 +39,10 @@ public class MainActivity extends Activity  {
     TextView contentRead;
 
     int count=0;
+    //存放最终数据
     String mfileName = "texts.txt" ;
+    //存放未修正的原始数据
+    String mfileName2 = "ttt.txt" ;
     public String path = "/storage/emulated/0/Download";
     //设置LOG标签
     private static final String TAG = "sensor";
@@ -170,6 +173,20 @@ public class MainActivity extends Activity  {
                 File file = new File(path);
 
                 float f[] = {X_lateral, Y_longitudinal, Z_vertical};
+
+                //写入原始数据
+                String path2 = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "Download" + File.separator + mfileName2;
+                File file2 = new File(path2);
+                try {
+                    FileOutputStream out2 = new FileOutputStream(file2,true);
+                    out2.write((f[0] + "\t" + f[1] + "\t" + f[2] + "\n").getBytes());
+                    out2.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                Log.e("", "path : " + path2);
+                //-------------
+
                 UpdateRealDate(f);
                 try {
                     //Toast.makeText(MainActivity.this,"文件写入中...",Toast.LENGTH_SHORT).show();
@@ -229,6 +246,7 @@ public class MainActivity extends Activity  {
         my_time_1 = year + "_" + month + "_" + day;
         my_time_2 = hour + ":" + minute + ":" + second;
         mfileName = "123 "+my_time_1+" "+my_time_2+".txt";
+        mfileName2 = "456 "+my_time_1+" "+my_time_2+".txt";
     }
     //计算旋转矩阵
     private void calculateRotationMatrix() {
