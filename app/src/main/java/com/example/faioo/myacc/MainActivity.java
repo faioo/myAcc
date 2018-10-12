@@ -37,7 +37,7 @@ public class MainActivity extends Activity  {
     Button btnStart;
     Button btnStop;
     TextView contentRead;
-
+    final int countSize = 12800;
     int count=0;
     //存放最终数据
     String mfileName = "texts.txt" ;
@@ -55,6 +55,16 @@ public class MainActivity extends Activity  {
     private float[] magneticFieldValues = new float[3];
     //存放旋转矩阵
     private float[] mRotationMatrix = new float[9];
+    //标志位 tag_acc标志产生了加速度
+    // tag_g标志产生了新的磁场数据
+    // tag_lineAcc标志产生了新的线性加速度数据
+    boolean tag_acc;
+    boolean tag_g;
+    boolean tag_lineAcc;
+    //定义x y z 存放当前实际线性加速度数据
+    float X_lineAcc;
+    float Y_lineAcc;
+    float Z_lineAcc;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -117,6 +127,10 @@ public class MainActivity extends Activity  {
                 magnetic = sm.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
                 //初始化线性加速度传感器
                 linerAcc = sm.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
+                //初始化标志位
+                tag_acc = false;
+                tag_g = false;
+                tag_lineAcc = false;
 
                 //20Hz=50000,50Hz=20000 100Hz=10000
                 //注册线性加速度传感器
@@ -137,6 +151,9 @@ public class MainActivity extends Activity  {
             @Override
             public void onClick(View view) {
                 sm.unregisterListener(myAccelerometerListener);
+                tag_lineAcc = false;
+                tag_acc = false;
+                tag_g = false;
                 contentWrite.setText("");
                 contentRead.setText("手动停止,已保存文件！");
                 Toast.makeText(MainActivity.this,"stop！.",Toast.LENGTH_SHORT).show();
@@ -148,37 +165,19 @@ public class MainActivity extends Activity  {
         //复写onSensorChanged方法
         public void onSensorChanged(SensorEvent sensorEvent){
             //if(sensorEvent.sensor.getType() == Sensor.TYPE_GYROSCOPE){
-            if(sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-                accelerometerValues = sensorEvent.values;
-            }
-            if(sensorEvent.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
-                magneticFieldValues = sensorEvent.values;
-            }
-            calculateRotationMatrix();
-            if(sensorEvent.sensor.getType() == Sensor.TYPE_LINEAR_ACCELERATION) {
-                Log.i(TAG, "onSensorChanged");
-                float X_lateral = sensorEvent.values[0];
-                float Y_longitudinal = sensorEvent.values[1];
-                float Z_vertical = sensorEvent.values[2];
-                Log.i(TAG, "\n heading " + X_lateral);
-                Log.i(TAG, "\n pitch " + Y_longitudinal);
-                Log.i(TAG, "\n roll " + Z_vertical);
-
-                x.setText("X: " + X_lateral);
-                y.setText("Y: " + Y_longitudinal);
-                z.setText("Z: " + (Z_vertical));
-
-                //String path = Environment.getExternalStorageDirectory().getAbsolutePath()+ File.separator+"Download"+File.separator+"123.txt";
+            //三组数据都有，开始通过旋转矩阵修正线性加速度数据
+            if (tag_lineAcc && tag_g && tag_acc)
+            {
+                //根据磁场数据（磁场传感器）和加速度数据（加速度传感器）计算旋转矩阵
+                calculateRotationMatrix();
+                float f[] = {X_lineAcc, Y_lineAcc, Z_lineAcc};
                 String path = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "Download" + File.separator + mfileName;
                 File file = new File(path);
-
-                float f[] = {X_lateral, Y_longitudinal, Z_vertical};
-
                 //写入原始数据
                 String path2 = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "Download" + File.separator + mfileName2;
                 File file2 = new File(path2);
                 try {
-                    FileOutputStream out2 = new FileOutputStream(file2,true);
+                    FileOutputStream out2 = new FileOutputStream(file2, true);
                     out2.write((f[0] + "\t" + f[1] + "\t" + f[2] + "\n").getBytes());
                     out2.close();
                 } catch (Exception e) {
@@ -188,10 +187,15 @@ public class MainActivity extends Activity  {
                 //-------------
 
                 UpdateRealDate(f);
+                //显示X Y Z
+                x.setText("X: " + f[0]);
+                y.setText("Y: " + f[1]);
+                z.setText("Z: " + f[2]);
                 try {
                     //Toast.makeText(MainActivity.this,"文件写入中...",Toast.LENGTH_SHORT).show();
                     contentWrite.setText("");
                     contentWrite.setText("文件写入中...");
+                    contentRead.setText("Playing...");
                     FileOutputStream out = new FileOutputStream(file, true);
                     out.write((f[0] + "\t" + f[1] + "\t" + f[2] + "\n").getBytes());
                     out.close();
@@ -200,12 +204,39 @@ public class MainActivity extends Activity  {
                 }
                 Log.e("", "path : " + path);
                 count++;
-                if (count == 12800) {
+                if (count == countSize) {
                     sm.unregisterListener(myAccelerometerListener);
                     contentWrite.setText("");
                     contentRead.setText("时间到，已保存文件！");
                     Toast.makeText(MainActivity.this, "时间到，已保存文件！.", Toast.LENGTH_SHORT).show();
+                    tag_lineAcc = false;
+                    tag_acc = false;
+                    tag_g = false;
                 }
+                tag_lineAcc = false;
+                tag_acc = false;
+                tag_g = false;
+            }
+            if(sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+                accelerometerValues = sensorEvent.values;
+                tag_acc = true;
+            }
+            if(sensorEvent.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
+                magneticFieldValues = sensorEvent.values;
+                tag_g = true;
+            }
+            if(sensorEvent.sensor.getType() == Sensor.TYPE_LINEAR_ACCELERATION) {
+                Log.i(TAG, "onSensorChanged");
+                float X_lateral = sensorEvent.values[0];
+                float Y_longitudinal = sensorEvent.values[1];
+                float Z_vertical = sensorEvent.values[2];
+                X_lineAcc = X_lateral;
+                Y_lineAcc = Y_longitudinal;
+                Z_lineAcc = Z_vertical;
+                //Log.i(TAG, "\n heading " + X_lateral);
+                //Log.i(TAG, "\n pitch " + Y_longitudinal);
+                //Log.i(TAG, "\n roll " + Z_vertical);
+                tag_lineAcc = true;
             }
         }
         //复写onAccuracyChanged方法
@@ -221,7 +252,7 @@ public class MainActivity extends Activity  {
          * */
         super.onPause();
     }
-
+    //给文件名加上时间戳
     public void fileNameBasedOnTime() {
         //当前时间
         Calendar cal = Calendar.getInstance();
