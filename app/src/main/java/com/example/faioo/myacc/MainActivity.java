@@ -17,6 +17,7 @@ import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -32,12 +33,16 @@ public class MainActivity extends Activity  {
     TextView x = null;
     TextView y = null;
     TextView z = null;
-    TextView fileName;
+    //TextView fileName;
     TextView contentWrite;
     Button btnStart;
     Button btnStop;
+    Button btnSetting;
     TextView contentRead;
-    final int countSize = 12800;
+    EditText editText;
+    //设置开关，运行期不可设置时间
+    boolean setTime = true;
+    int countSize = 12800;
     int count=0;
     //存放最终数据
     String mfileName = "texts.txt" ;
@@ -106,16 +111,19 @@ public class MainActivity extends Activity  {
         x = (TextView) findViewById(R.id.editTextx);
         y = (TextView) findViewById(R.id.editTexty);
         z = (TextView) findViewById(R.id.editTextz);
-        fileName = (TextView) findViewById(R.id.fileName);
+        //fileName = (TextView) findViewById(R.id.fileName);
         contentWrite = (TextView) findViewById(R.id.contentWrite);
         btnStart = (Button) findViewById(R.id.btnStart);
         btnStop = (Button) findViewById(R.id.btnStop);
         contentRead = (TextView) findViewById(R.id.contentRead);
-
+        btnSetting = (Button) findViewById(R.id.btnSetting);
+        editText = (EditText)findViewById(R.id.editText);
         btnStart.setOnClickListener(new View.OnClickListener() {
             //String[] strings= {"http://img.doooor.com/img/forum/201412/05/220220e93j9j809wcwz9hb.jpg"};
             @Override
             public void onClick(View view) {
+                //运行期不可设置时间
+                setTime = false;
                 sm = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
                 int sensorType = Sensor.TYPE_ACCELEROMETER;
                 int sensorType2 = Sensor.TYPE_LINEAR_ACCELERATION;
@@ -150,6 +158,8 @@ public class MainActivity extends Activity  {
             //  String[] strings= {"http://img.doooor.com/img/forum/201412/05/220220e93j9j809wcwz9hb.jpg"};
             @Override
             public void onClick(View view) {
+                //运行期不可设置时间
+                setTime = true;
                 sm.unregisterListener(myAccelerometerListener);
                 tag_lineAcc = false;
                 tag_acc = false;
@@ -157,6 +167,20 @@ public class MainActivity extends Activity  {
                 contentWrite.setText("");
                 contentRead.setText("手动停止,已保存文件！");
                 Toast.makeText(MainActivity.this,"stop！.",Toast.LENGTH_SHORT).show();
+            }
+        });
+        btnSetting.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view) {
+                if (setTime){
+                String tmp = editText.getText().toString();
+                countSize = Integer.parseInt(tmp);
+                String str = "设置成功：时间为"+countSize/10+'s';
+                Toast.makeText(MainActivity.this,str,Toast.LENGTH_SHORT).show();
+                }
+                else {
+                    Toast.makeText(MainActivity.this,"运行期不可设置时间！",Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
@@ -212,6 +236,8 @@ public class MainActivity extends Activity  {
                     tag_lineAcc = false;
                     tag_acc = false;
                     tag_g = false;
+                    //运行期不可设置时间,结束后重置开关
+                    setTime = true;
                 }
                 tag_lineAcc = false;
                 tag_acc = false;

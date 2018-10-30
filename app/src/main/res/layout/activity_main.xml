@@ -28,7 +28,7 @@
         android:text="Stop"
         app:layout_constraintBottom_toBottomOf="parent"
         android:layout_marginBottom="33dp"
-        android:layout_marginRight="58dp"
+        android:layout_marginRight="99dp"
         app:layout_constraintRight_toRightOf="parent"
         android:layout_marginEnd="58dp" />
 
@@ -78,19 +78,6 @@
         tools:layout_editor_absoluteY="366dp" />
 
     <TextView
-        android:id="@+id/fileName"
-        android:layout_width="287dp"
-        android:layout_height="48dp"
-        android:layout_marginRight="8dp"
-        app:layout_constraintRight_toRightOf="parent"
-        android:layout_marginLeft="8dp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        android:layout_marginBottom="12dp"
-        app:layout_constraintBottom_toTopOf="@+id/editTextx"
-        app:layout_constraintHorizontal_bias="0.506"
-        tools:layout_editor_absoluteY="192dp" />
-
-    <TextView
         android:id="@+id/contentWrite"
         android:layout_width="144dp"
         android:layout_height="135dp"
@@ -99,20 +86,49 @@
         android:layout_marginLeft="8dp"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        android:layout_marginTop="29dp"
-        app:layout_constraintHorizontal_bias="0.74"
-        android:layout_marginBottom="8dp"
-        app:layout_constraintBottom_toTopOf="@+id/fileName" />
+        android:layout_marginTop="27dp"
+        app:layout_constraintHorizontal_bias="1.0" />
 
     <TextView
         android:id="@+id/contentRead"
         android:layout_width="140dp"
         android:layout_height="137dp"
-        android:layout_marginRight="28dp"
+        android:layout_marginRight="26dp"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        android:layout_marginTop="27dp"
+        android:layout_marginTop="27dp" />
+
+    <Button
+        android:id="@+id/btnSetting"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
-        app:layout_constraintBottom_toTopOf="@+id/fileName" />
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginTop="8dp"
+        android:text="set"
+        app:layout_constraintBottom_toTopOf="@+id/editTextx"
+        app:layout_constraintHorizontal_bias="0.871"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.941" />
+
+    <EditText
+        android:id="@+id/editText"
+        android:layout_width="164dp"
+        android:layout_height="47dp"
+        android:ems="10"
+        android:inputType="number"
+        android:layout_marginRight="8dp"
+        android:layout_marginLeft="8dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintHorizontal_bias="0.225"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginTop="185dp"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintVertical_bias="0.0"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/editTextx" />
 
 </android.support.constraint.ConstraintLayout>
