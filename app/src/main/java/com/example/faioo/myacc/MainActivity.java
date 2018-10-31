@@ -190,59 +190,8 @@ public class MainActivity extends Activity  {
         public void onSensorChanged(SensorEvent sensorEvent){
             //if(sensorEvent.sensor.getType() == Sensor.TYPE_GYROSCOPE){
             //三组数据都有，开始通过旋转矩阵修正线性加速度数据
-            if (tag_lineAcc && tag_g && tag_acc)
-            {
-                //根据磁场数据（磁场传感器）和加速度数据（加速度传感器）计算旋转矩阵
-                calculateRotationMatrix();
-                float f[] = {X_lineAcc, Y_lineAcc, Z_lineAcc};
-                String path = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "Download" + File.separator + mfileName;
-                File file = new File(path);
-                //写入原始数据
-                String path2 = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "Download" + File.separator + mfileName2;
-                File file2 = new File(path2);
-                try {
-                    FileOutputStream out2 = new FileOutputStream(file2, true);
-                    out2.write((f[0] + "\t" + f[1] + "\t" + f[2] + "\n").getBytes());
-                    out2.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                Log.e("", "path : " + path2);
-                //-------------
-
-                UpdateRealDate(f);
-                //显示X Y Z
-                x.setText("X: " + f[0]);
-                y.setText("Y: " + f[1]);
-                z.setText("Z: " + f[2]);
-                try {
-                    //Toast.makeText(MainActivity.this,"文件写入中...",Toast.LENGTH_SHORT).show();
-                    contentWrite.setText("");
-                    contentWrite.setText("文件写入中...");
-                    contentRead.setText("Playing...");
-                    FileOutputStream out = new FileOutputStream(file, true);
-                    out.write((f[0] + "\t" + f[1] + "\t" + f[2] + "\n").getBytes());
-                    out.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                Log.e("", "path : " + path);
-                count++;
-                if (count == countSize) {
-                    sm.unregisterListener(myAccelerometerListener);
-                    contentWrite.setText("");
-                    contentRead.setText("时间到，已保存文件！");
-                    Toast.makeText(MainActivity.this, "时间到，已保存文件！.", Toast.LENGTH_SHORT).show();
-                    tag_lineAcc = false;
-                    tag_acc = false;
-                    tag_g = false;
-                    //运行期不可设置时间,结束后重置开关
-                    setTime = true;
-                }
-                tag_lineAcc = false;
-                tag_acc = false;
-                tag_g = false;
-            }
+            //if (tag_lineAcc && tag_g && tag_acc) 代码整合到WriteFile(float,float,float)函数中
+            
             if(sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
                 accelerometerValues = sensorEvent.values;
                 tag_acc = true;
@@ -262,6 +211,7 @@ public class MainActivity extends Activity  {
                 //Log.i(TAG, "\n heading " + X_lateral);
                 //Log.i(TAG, "\n pitch " + Y_longitudinal);
                 //Log.i(TAG, "\n roll " + Z_vertical);
+                WriteFile(X_lateral,Y_longitudinal,Z_vertical);
                 tag_lineAcc = true;
             }
         }
@@ -301,9 +251,63 @@ public class MainActivity extends Activity  {
         minute = String.valueOf(cal.get(Calendar.MINUTE));
         second = String.valueOf(cal.get(Calendar.SECOND));
         my_time_1 = year + "_" + month + "_" + day;
-        my_time_2 = hour + ":" + minute + ":" + second;
+        my_time_2 = hour + "-" + minute + "-" + second;
         mfileName = "123 "+my_time_1+" "+my_time_2+".txt";
         mfileName2 = "456 "+my_time_1+" "+my_time_2+".txt";
+    }
+    //写文件,并显示到app上
+    public void WriteFile(float xx,float yy,float zz)
+    {
+        //根据磁场数据（磁场传感器）和加速度数据（加速度传感器）计算旋转矩阵
+        calculateRotationMatrix();
+        //float f[] = {X_lineAcc, Y_lineAcc, Z_lineAcc};
+        float f[] = {xx,yy,zz};
+        String path = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "Download" + File.separator + mfileName;
+        File file = new File(path);
+        //写入原始数据
+        /*
+        String path2 = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "Download" + File.separator + mfileName2;
+        File file2 = new File(path2);
+        try {
+            FileOutputStream out2 = new FileOutputStream(file2, true);
+            out2.write((f[0] + "\t" + f[1] + "\t" + f[2] + "\n").getBytes());
+            out2.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        Log.e("", "path : " + path2);
+        */
+        //-------------
+
+        UpdateRealDate(f);
+        //显示X Y Z
+        x.setText("X: " + f[0]);
+        y.setText("Y: " + f[1]);
+        z.setText("Z: " + f[2]);
+        try {
+            //Toast.makeText(MainActivity.this,"文件写入中...",Toast.LENGTH_SHORT).show();
+            contentWrite.setText("");
+            contentWrite.setText("文件写入中...");
+            contentRead.setText("Playing...");
+            FileOutputStream out = new FileOutputStream(file, true);
+            out.write((f[0] + "\t" + f[1] + "\t" + f[2] + "\n").getBytes());
+            out.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        Log.e("", "path : " + path);
+        count++;
+        if (count == countSize) {
+            sm.unregisterListener(myAccelerometerListener);
+            contentWrite.setText("");
+            contentRead.setText("时间到，已保存文件！");
+            Toast.makeText(MainActivity.this, "时间到，已保存文件！", Toast.LENGTH_SHORT).show();
+            tag_lineAcc = false;
+            tag_acc = false;
+            tag_g = false;
+            //运行期不可设置时间,结束后重置开关
+            setTime = true;
+        }
     }
     //计算旋转矩阵
     private void calculateRotationMatrix() {
