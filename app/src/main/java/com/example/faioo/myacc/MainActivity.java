@@ -10,6 +10,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.icu.util.Calendar;
 import android.icu.util.TimeZone;
+import android.media.MediaScannerConnection;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
@@ -42,6 +43,7 @@ public class MainActivity extends Activity  {
     EditText editText;
     //设置开关，运行期不可设置时间
     boolean setTime = true;
+    //默认计时12800次
     int countSize = 12800;
     int count=0;
     //存放最终数据
@@ -151,7 +153,7 @@ public class MainActivity extends Activity  {
                 //创建新文件名
                 fileNameBasedOnTime();
                 //sm.registerListener(myAccelerometerListener, sm.getDefaultSensor(sensorType3), 10000);
-                count =0;
+                count = 0;
             }
         });
         btnStop.setOnClickListener(new View.OnClickListener() {
@@ -175,7 +177,7 @@ public class MainActivity extends Activity  {
                 if (setTime){
                 String tmp = editText.getText().toString();
                 countSize = Integer.parseInt(tmp);
-                String str = "设置成功：时间为"+countSize/10+'s';
+                String str = "设置成功：时间为"+countSize/100+'s';
                 Toast.makeText(MainActivity.this,str,Toast.LENGTH_SHORT).show();
                 }
                 else {
@@ -191,7 +193,6 @@ public class MainActivity extends Activity  {
             //if(sensorEvent.sensor.getType() == Sensor.TYPE_GYROSCOPE){
             //三组数据都有，开始通过旋转矩阵修正线性加速度数据
             //if (tag_lineAcc && tag_g && tag_acc) 代码整合到WriteFile(float,float,float)函数中
-            
             if(sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
                 accelerometerValues = sensorEvent.values;
                 tag_acc = true;
@@ -301,6 +302,8 @@ public class MainActivity extends Activity  {
             sm.unregisterListener(myAccelerometerListener);
             contentWrite.setText("");
             contentRead.setText("时间到，已保存文件！");
+            //刷新文件目录缓存，使得PC端也可以看到数据
+            MediaScannerConnection.scanFile(this, new String[] { file.getAbsolutePath() }, null, null);
             Toast.makeText(MainActivity.this, "时间到，已保存文件！", Toast.LENGTH_SHORT).show();
             tag_lineAcc = false;
             tag_acc = false;
