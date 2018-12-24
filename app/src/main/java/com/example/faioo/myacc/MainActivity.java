@@ -11,8 +11,12 @@ import android.hardware.SensorManager;
 import android.icu.util.Calendar;
 import android.icu.util.TimeZone;
 import android.media.MediaScannerConnection;
+import android.net.DhcpInfo;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
@@ -24,6 +28,7 @@ import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,10 +44,26 @@ public class MainActivity extends Activity  {
     Button btnStart;
     Button btnStop;
     Button btnSetting;
+    Button btnSwitch;
     TextView contentRead;
     EditText editText;
     //设置开关，运行期不可设置时间
     boolean setTime = true;
+    //server T or client F 默认是server
+    boolean server_or_client = true;
+    //在主线程中定义Handler传入子线程用于更新TextView
+    private Handler mHandler;
+    private ClientThread mClientThread; //客户端线程
+    private ServerThread mServerThread; //服务器线程
+    //端口号
+    private static final int PORT = 30000;
+    public ServerSocket ss;
+    WifiManager wifiManager;
+    //定义messageb
+    public static final int MSG_REV = 0;//接收
+    public static final int MSG_SEND = 1;//发送
+    public static final int MSG_START = 2;//开始跑数据
+    public static final int MSG_STOP = 3;//停止
     //默认计时12800次
     int countSize = 12800;
     int count=0;
@@ -82,6 +103,37 @@ public class MainActivity extends Activity  {
          * 控件初始化
          */
         initView();
+        wifiManager = (WifiManager) this.getSystemService(Context.WIFI_SERVICE);
+        mHandler = new Handler() {
+            @Override
+            public void handleMessage(Message msg) {
+                if (msg.what == MSG_REV) {
+                    contentRead.append("\n" + msg.obj.toString());
+                    start_sensor();
+                }
+                if (msg.what == MSG_STOP) {
+                    contentRead.append("\n" + msg.obj.toString());
+                    stop_sensor();
+                }
+            }
+        };
+        if (server_or_client) {
+            //服务器端代码
+            //WifiManager wifiManager = (WifiManager) this.getSystemService(Context.WIFI_SERVICE);
+            //WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+            //String IPAddress = intToIp(wifiInfo.getIpAddress());
+            //show.setText(IPAddress);
+            mServerThread = new ServerThread(PORT, mHandler);
+            new Thread(mServerThread).start();
+        }
+        else {
+            //客户端代码
+            DhcpInfo dhcpinfo = wifiManager.getDhcpInfo();
+            final String serverAddress = intToIp(dhcpinfo.serverAddress);
+            contentRead.setText(serverAddress);
+            mClientThread = new ClientThread(serverAddress, mHandler);
+            new Thread(mClientThread).start();
+        }
     }
 
     //所有申请的权限
@@ -120,55 +172,65 @@ public class MainActivity extends Activity  {
         contentRead = (TextView) findViewById(R.id.contentRead);
         btnSetting = (Button) findViewById(R.id.btnSetting);
         editText = (EditText)findViewById(R.id.editText);
+        btnSwitch = (Button) findViewById(R.id.btnSwitch);
+        print_current_status();
         btnStart.setOnClickListener(new View.OnClickListener() {
             //String[] strings= {"http://img.doooor.com/img/forum/201412/05/220220e93j9j809wcwz9hb.jpg"};
             @Override
             public void onClick(View view) {
-                //运行期不可设置时间
-                setTime = false;
-                sm = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-                int sensorType = Sensor.TYPE_ACCELEROMETER;
-                int sensorType2 = Sensor.TYPE_LINEAR_ACCELERATION;
-                int sensorType3 = Sensor.TYPE_GYROSCOPE;
-
-                // 初始化加速度传感器
-                accelerometer = sm.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-                // 初始化地磁场传感器
-                magnetic = sm.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-                //初始化线性加速度传感器
-                linerAcc = sm.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
-                //初始化标志位
-                tag_acc = false;
-                tag_g = false;
-                tag_lineAcc = false;
-
-                //20Hz=50000,50Hz=20000 100Hz=10000
-                //注册线性加速度传感器
-                //sm.registerListener(myAccelerometerListener, sm.getDefaultSensor(sensorType2), 10000);
-                sm.registerListener(myAccelerometerListener, linerAcc, 10000);
-                //注册磁场传感器
-                sm.registerListener(myAccelerometerListener,magnetic,10000);
-                //注册加速度传感器
-                sm.registerListener(myAccelerometerListener,accelerometer,10000);
-                //创建新文件名
-                fileNameBasedOnTime();
-                //sm.registerListener(myAccelerometerListener, sm.getDefaultSensor(sensorType3), 10000);
-                count = 0;
+                try {
+                    Message msg = new Message();
+                    String sss = "start";
+                    msg.what = MSG_SEND;
+                    msg.obj = sss;
+                    if( server_or_client )
+                    {
+                        mServerThread.revHandler.sendMessage(msg);
+                        start_sensor();
+                    }
+                    else
+                    {
+                        mClientThread.revHandler.sendMessage(msg);
+                        start_sensor();
+                    }
+                    contentRead.setText(sss);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
         btnStop.setOnClickListener(new View.OnClickListener() {
             //  String[] strings= {"http://img.doooor.com/img/forum/201412/05/220220e93j9j809wcwz9hb.jpg"};
             @Override
             public void onClick(View view) {
+                try {
+                    Message msg = new Message();
+                    String sss = "stop";
+                    msg.what = MSG_STOP;
+                    msg.obj = sss;
+                    if( server_or_client )
+                    {
+                        mServerThread.revHandler.sendMessage(msg);
+                        stop_sensor();
+                    }
+                    else
+                    {
+                        mClientThread.revHandler.sendMessage(msg);
+                        stop_sensor();
+                    }
+                    contentRead.setText(sss);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
                 //运行期不可设置时间
-                setTime = true;
-                sm.unregisterListener(myAccelerometerListener);
-                tag_lineAcc = false;
-                tag_acc = false;
-                tag_g = false;
-                contentWrite.setText("");
-                contentRead.setText("手动停止,已保存文件！");
-                Toast.makeText(MainActivity.this,"stop！.",Toast.LENGTH_SHORT).show();
+                //setTime = true;
+                //sm.unregisterListener(myAccelerometerListener);
+                //tag_lineAcc = false;
+                //tag_acc = false;
+                //tag_g = false;
+                //contentWrite.setText("");
+                //contentRead.setText("手动停止,已保存文件！");
+                //Toast.makeText(MainActivity.this,"stop！.",Toast.LENGTH_SHORT).show();
             }
         });
         btnSetting.setOnClickListener(new View.OnClickListener(){
@@ -183,6 +245,13 @@ public class MainActivity extends Activity  {
                 else {
                     Toast.makeText(MainActivity.this,"运行期不可设置时间！",Toast.LENGTH_SHORT).show();
                 }
+            }
+        });
+        btnSwitch.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view) {
+                server_or_client = !server_or_client;
+                print_current_status();
             }
         });
     }
@@ -325,5 +394,73 @@ public class MainActivity extends Activity  {
         f[1] = mRotationMatrix[3]*f[0]+mRotationMatrix[4]*f[1]+mRotationMatrix[5]*f[2];
         //update f[2]
         f[2] = mRotationMatrix[6]*f[0]+mRotationMatrix[7]*f[1]+mRotationMatrix[8]*f[2];
+    }
+
+    //输出当前是客户端还是服务器
+    private void print_current_status()
+    {
+        if (server_or_client) {
+            Toast.makeText(MainActivity.this,"角色切换：当前为服务器！",Toast.LENGTH_SHORT).show();
+            contentWrite.setText("");
+            contentWrite.setText("我是服务器");
+        }
+        else {
+            Toast.makeText(MainActivity.this,"角色切换：当前为客户端！",Toast.LENGTH_SHORT).show();
+            contentWrite.setText("");
+            contentWrite.setText("我是客户端");
+        }
+    }
+    public static String intToIp(int ipInt) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(ipInt & 0xFF).append(".");
+        sb.append((ipInt >> 8) & 0xFF).append(".");
+        sb.append((ipInt >> 16) & 0xFF).append(".");
+        sb.append((ipInt >> 24) & 0xFF);
+        return sb.toString();
+    }
+    public void start_sensor()
+    {
+        //运行期不可设置时间
+        setTime = false;
+        sm = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        int sensorType = Sensor.TYPE_ACCELEROMETER;
+        int sensorType2 = Sensor.TYPE_LINEAR_ACCELERATION;
+        int sensorType3 = Sensor.TYPE_GYROSCOPE;
+
+        // 初始化加速度传感器
+        accelerometer = sm.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        // 初始化地磁场传感器
+        magnetic = sm.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+        //初始化线性加速度传感器
+        linerAcc = sm.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
+        //初始化标志位
+        tag_acc = false;
+        tag_g = false;
+        tag_lineAcc = false;
+
+        //20Hz=50000,50Hz=20000 100Hz=10000
+        //注册线性加速度传感器
+        //sm.registerListener(myAccelerometerListener, sm.getDefaultSensor(sensorType2), 10000);
+        sm.registerListener(myAccelerometerListener, linerAcc, 10000);
+        //注册磁场传感器
+        sm.registerListener(myAccelerometerListener,magnetic,10000);
+        //注册加速度传感器
+        sm.registerListener(myAccelerometerListener,accelerometer,10000);
+        //创建新文件名
+        fileNameBasedOnTime();
+        //sm.registerListener(myAccelerometerListener, sm.getDefaultSensor(sensorType3), 10000);
+        count = 0;
+    }
+    public void stop_sensor()
+    {
+        //运行期不可设置时间
+        setTime = true;
+        sm.unregisterListener(myAccelerometerListener);
+        tag_lineAcc = false;
+        tag_acc = false;
+        tag_g = false;
+        contentWrite.setText("");
+        contentRead.setText("手动停止,已保存文件！");
+        Toast.makeText(MainActivity.this,"stop！.",Toast.LENGTH_SHORT).show();
     }
 }
