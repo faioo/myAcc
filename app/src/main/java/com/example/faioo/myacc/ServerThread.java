@@ -59,6 +59,7 @@ public class ServerThread implements Runnable {
                         try {
                             String content = null;
                             while ((content = in.readLine()) != null) {
+                                Log.d("fai","rev start1");
                                 Message msg = new Message();
                                 if(content == "stop")
                                 {
@@ -72,10 +73,12 @@ public class ServerThread implements Runnable {
                                 }
                                 if (content == "start")
                                 {
+                                    Log.d("fai","rev start2");
                                     Log.d("fai",content);
                                     msg.what = MSG_REV;
                                     msg.obj = content;
                                     mHandler.sendMessage(msg);
+                                    Log.d("fai","rev start3");
                                 }
                             }
                         }catch (IOException e){
@@ -89,11 +92,22 @@ public class ServerThread implements Runnable {
                     public void handleMessage(Message msg) {
                         if (msg.what == MSG_SEND) {
                             try {
+                                Log.d("fai","send start2");
+                                out.write((msg.obj.toString() + "\r\n").getBytes("utf-8"));
+                                out.flush();
+                                Log.d("fai","send start3");
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                                Log.d("Fai","异常1");
+                            }
+                        }
+                        if (msg.what == MSG_STOP) {
+                            try {
                                 out.write((msg.obj.toString() + "\r\n").getBytes("utf-8"));
                                 out.flush();
                             } catch (IOException e) {
                                 e.printStackTrace();
-                                Log.d("Fai","异常1");
+                                Log.d("Fai","异常2");
                             }
                         }
                     }

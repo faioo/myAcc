@@ -49,8 +49,10 @@ public class ClientThread implements Runnable {
                     try {
                         String content = null;
                         while ((content = mBufferedReader.readLine()) != null) {
+                            Log.d("fai","rev start1");
+                            Log.d("fai","+++++++++++++++++" + content);
                             Message msg = new Message();
-                            if(content == "stop")
+                            if(content.equals("stop"))
                             {
                                 //mSocket.close();
                                 //mBufferedReader.close();
@@ -60,12 +62,14 @@ public class ClientThread implements Runnable {
                                 msg.obj = content;
                                 mHandler.sendMessage(msg);
                             }
-                            if (content == "start")
+                            if (content.equals("start"))
                             {
+                                Log.d("fai","rev start2");
                                 Log.d("fai",content);
                                 msg.what = MSG_REV;
                                 msg.obj = content;
                                 mHandler.sendMessage(msg);
+                                Log.d("fai","rev start3");
                             }
                         }
                     }catch (IOException e){
@@ -85,6 +89,15 @@ public class ClientThread implements Runnable {
                         } catch (IOException e) {
                             e.printStackTrace();
                             Log.d("fai","异常1");
+                        }
+                    }
+                    if (msg.what == MSG_STOP) {
+                        try {
+                            mOutputStream.write((msg.obj.toString() + "\r\n").getBytes("utf-8"));
+                            mOutputStream.flush();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            Log.d("Fai","异常2");
                         }
                     }
                 }

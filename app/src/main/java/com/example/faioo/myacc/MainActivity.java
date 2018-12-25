@@ -45,6 +45,7 @@ public class MainActivity extends Activity  {
     Button btnStop;
     Button btnSetting;
     Button btnSwitch;
+    Button btnThread;
     TextView contentRead;
     EditText editText;
     //设置开关，运行期不可设置时间
@@ -117,23 +118,7 @@ public class MainActivity extends Activity  {
                 }
             }
         };
-        if (server_or_client) {
-            //服务器端代码
-            //WifiManager wifiManager = (WifiManager) this.getSystemService(Context.WIFI_SERVICE);
-            //WifiInfo wifiInfo = wifiManager.getConnectionInfo();
-            //String IPAddress = intToIp(wifiInfo.getIpAddress());
-            //show.setText(IPAddress);
-            mServerThread = new ServerThread(PORT, mHandler);
-            new Thread(mServerThread).start();
-        }
-        else {
-            //客户端代码
-            DhcpInfo dhcpinfo = wifiManager.getDhcpInfo();
-            final String serverAddress = intToIp(dhcpinfo.serverAddress);
-            contentRead.setText(serverAddress);
-            mClientThread = new ClientThread(serverAddress, mHandler);
-            new Thread(mClientThread).start();
-        }
+
     }
 
     //所有申请的权限
@@ -173,6 +158,7 @@ public class MainActivity extends Activity  {
         btnSetting = (Button) findViewById(R.id.btnSetting);
         editText = (EditText)findViewById(R.id.editText);
         btnSwitch = (Button) findViewById(R.id.btnSwitch);
+        btnThread = (Button) findViewById(R.id.btnThread);
         print_current_status();
         btnStart.setOnClickListener(new View.OnClickListener() {
             //String[] strings= {"http://img.doooor.com/img/forum/201412/05/220220e93j9j809wcwz9hb.jpg"};
@@ -186,6 +172,7 @@ public class MainActivity extends Activity  {
                     if( server_or_client )
                     {
                         mServerThread.revHandler.sendMessage(msg);
+                        Log.d("fai","send start1");
                         start_sensor();
                     }
                     else
@@ -252,6 +239,28 @@ public class MainActivity extends Activity  {
             public void onClick(View view) {
                 server_or_client = !server_or_client;
                 print_current_status();
+            }
+        });
+        btnThread.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view) {
+                if (server_or_client) {
+                    //服务器端代码
+                    //WifiManager wifiManager = (WifiManager) this.getSystemService(Context.WIFI_SERVICE);
+                    //WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+                    //String IPAddress = intToIp(wifiInfo.getIpAddress());
+                    //show.setText(IPAddress);
+                    mServerThread = new ServerThread(PORT, mHandler);
+                    new Thread(mServerThread).start();
+                }
+                else {
+                    //客户端代码
+                    DhcpInfo dhcpinfo = wifiManager.getDhcpInfo();
+                    final String serverAddress = intToIp(dhcpinfo.serverAddress);
+                    contentRead.setText(serverAddress);
+                    mClientThread = new ClientThread(serverAddress, mHandler);
+                    new Thread(mClientThread).start();
+                }
             }
         });
     }
@@ -356,8 +365,8 @@ public class MainActivity extends Activity  {
         z.setText("Z: " + f[2]);
         try {
             //Toast.makeText(MainActivity.this,"文件写入中...",Toast.LENGTH_SHORT).show();
-            contentWrite.setText("");
-            contentWrite.setText("文件写入中...");
+            //contentWrite.setText("");
+            //contentWrite.setText("文件写入中...");
             contentRead.setText("Playing...");
             FileOutputStream out = new FileOutputStream(file, true);
             out.write((f[0] + "\t" + f[1] + "\t" + f[2] + "\n").getBytes());
@@ -369,7 +378,7 @@ public class MainActivity extends Activity  {
         count++;
         if (count == countSize) {
             sm.unregisterListener(myAccelerometerListener);
-            contentWrite.setText("");
+            //contentWrite.setText("");
             contentRead.setText("时间到，已保存文件！");
             //刷新文件目录缓存，使得PC端也可以看到数据
             MediaScannerConnection.scanFile(this, new String[] { file.getAbsolutePath() }, null, null);
@@ -459,7 +468,7 @@ public class MainActivity extends Activity  {
         tag_lineAcc = false;
         tag_acc = false;
         tag_g = false;
-        contentWrite.setText("");
+        //contentWrite.setText("");
         contentRead.setText("手动停止,已保存文件！");
         Toast.makeText(MainActivity.this,"stop！.",Toast.LENGTH_SHORT).show();
     }
